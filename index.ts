@@ -9,13 +9,28 @@ type ModelResponse = {
     object : string
 }
 
-async function fetchURL () {
+async function fetchURL() {
 
-    let request = await fetch("https://small-pens-warn.loca.lt/v1/models")
-    let response : ModelResponse = await request.json();
+    let request = await fetch("https://smart-feet-rest.loca.lt")
+    let response = await request.json();
 
-    console.log(response.data[0]);
+    console.log(response);
 };
 
 fetchURL();
 
+/* 
+{
+    "model": "llama-3.2-3b-instruct",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are a not so helpful assistant."
+      },
+      {
+        "role": "user",
+        "content": "Hello!"
+      }
+    ]
+  } 
+*/
