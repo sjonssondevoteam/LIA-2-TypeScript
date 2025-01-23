@@ -1,62 +1,91 @@
 type PostRequest = {
-    model: string,
-    messages: messageData[],
+  model: string,
+  messages: messageData[],
 }
 
 type messageData = {
-    role: string,
-    content: string
+  role: string,
+  content: string
 }
 
-function createMessageData(role: string, content: string): messageData {
-    return { role, content };
+type responseObject = {
+  id : string,
+  object : string,
+  created : number,
+  model : string,
+  choices : choicesData[],
+  usage: object,
+  system_fingerprint: string
 }
+
+type choicesData = {
+  index : number,
+  logprobs : null,
+  finish_reason : string,
+  message: messageData;
+}
+
+function addMessageData(role: string, content: string): messageData {
+  return { role, content };
+}
+
+let contextArray: Array<messageData> = [];
+
+function initContext() { // Startprompt
+  // Prompt om hur AI ska bete sig till användaren
+  contextArray.push(addMessageData("system", "You are a helpful assistant."));
+  // Prompt som användaren ska skriva till AI:n, ska vara en förfrågan
+  contextArray.push(addMessageData("user", "Hello!"));
+}
+
+
 
 function createPostData(): PostRequest {
-    let postData: PostRequest = {
-        model: "",
-        messages: []
-    };
-    postData.model = "llama-3.2-3b-instruct";
-
-    // Prompt om hur AI ska bete sig till användaren
-    postData.messages.push(createMessageData("system", "You are a helpful assistant."));
-
-    // Prompt som användaren ska skriva till AI:n, ska vara en förfrågan
-    postData.messages.push(createMessageData("user", "Hello!"));
-
-    return postData;
+  let postData: PostRequest = {
+    model: "llama-3.2-3b-instruct",
+    messages: contextArray
+  }
+  return postData;
 }
 
+function getAIanswer(aiObject : responseObject) : messageData{
+  //console.log("----getAIanswer----");
+  //console.log(aiObject);
+  //console.log(aiObject.choices);
+
+  // Lägg till try-catch för felhantering i framtiden.
+  let answer : messageData = aiObject.choices[0].message;
+
+  return answer;
+}
 
 async function postData(data: PostRequest) {
-    console.log("------------------")
+  
+  // Lägg till användarens fråga här innan fetch-requesten, för att fortsätta konversationen.
+  //contextArray.push( );
 
-    //console.log(JSON.stringify(data));
-    console.log(data.messages[1].role + ": " + data.messages[1].content)
+  const response = await fetch("https://violet-carrots-stare.loca.lt/v1/chat/completions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  const responseData = await response.json();
 
-    const response = await fetch("https://curly-sloths-raise.loca.lt/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-    });
-    const responseData = await response.json();
+  console.log(responseData);
 
-    console.log("---------")
+  let answer : messageData = getAIanswer(responseData);
 
-    const dataArray = responseData.choices;
+  contextArray.push(answer);
 
-    dataArray.forEach((element: any) => {
-
-        console.log(element.message.role + ": " + element.message.content ,"\n");
-        
-    });
-
-
-
+  console.log(contextArray);
+  //console.log(answer);
 }
 
+initContext();
+
 postData(createPostData());
+
+
 
 /*
 { "data": 
